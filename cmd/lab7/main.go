@@ -4,16 +4,13 @@ package main
 
 // These are your imports / libraries / frameworks
 import (
-	// this is Go's built-in sql library
 	"database/sql"
 	"log"
 	"net/http"
 	"os"
 	"strconv"
 
-	// this allows us to run our web server
 	"github.com/gin-gonic/gin"
-	// this lets us connect to Postgres DB's
 	_ "github.com/lib/pq"
 )
 
@@ -58,7 +55,7 @@ func main() {
 	router.GET("/query1", func(c *gin.Context) {
 		table := "<table class='table'><thead><tr>"
 		// put your query here
-		rows, err := db.Query("SELECT * FROM table1") // <--- EDIT THIS LINE
+		rows, err := db.Query("SELECT SUM(length) FROM song WHERE albumId IN (SELECT albumId FROM album WHERE cost < '10.00');") // <--- EDIT THIS LINE
 		if err != nil {
 			// careful about returning errors to the user!
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -73,15 +70,15 @@ func main() {
 		}
 		// once you've added all the columns in, close the header
 		table += "</thead><tbody>"
-		// declare all your RETURNED columns here
-		var id int      // <--- EDIT THESE LINES
-		var name string //<--- ^^^^
+		// declare all your RETURNED columns here  
+		var length int  
+		  // <--- EDIT THESE LINES //<--- ^^^^
 		for rows.Next() {
 			// assign each of them, in order, to the parameters of rows.Scan.
 			// preface each variable with &
-			rows.Scan(&id, &name) // <--- EDIT THIS LINE
+			rows.Scan(&length) // <--- EDIT THIS LINE
 			// can't combine ints and strings in Go. Use strconv.Itoa(int) instead
-			table += "<tr><td>" + strconv.Itoa(id) + "</td><td>" + name + "</td></tr>" // <--- EDIT THIS LINE
+			table += "<tr><td>" + strconv.Itoa(length) + "</td></tr>" // <--- EDIT THIS LINE
 		}
 		// finally, close out the body and table
 		table += "</tbody></table>"
@@ -91,7 +88,7 @@ func main() {
 	router.GET("/query2", func(c *gin.Context) {
 		table := "<table class='table'><thead><tr>"
 		// put your query here
-		rows, err := db.Query("SELECT * FROM table1") // <--- EDIT THIS LINE
+		rows, err := db.Query("SELECT MAX(length) FROM song JOIN album ON song.albumId = album.albumId WHERE genre = 'Pop';") // <--- EDIT THIS LINE
 		if err != nil {
 			// careful about returning errors to the user!
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -107,19 +104,22 @@ func main() {
 		// once you've added all the columns in, close the header
 		table += "</thead><tbody>"
 		// columns
+		var time int
+
 		for rows.Next() {
-			// rows.Scan() // put columns here prefaced with &
-			table += "<tr><td></td></tr>" // <--- EDIT THIS LINE
+
+			rows.Scan(&time) 
+			table += "<tr><td>" + strconv.Itoa(time) + "</td></tr>" 
 		}
 		// finally, close out the body and table
 		table += "</tbody></table>"
 		c.Data(http.StatusOK, "text/html", []byte(table))
-	})
+	}) 
 
 	router.GET("/query3", func(c *gin.Context) {
 		table := "<table class='table'><thead><tr>"
 		// put your query here
-		rows, err := db.Query("SELECT * FROM table1") // <--- EDIT THIS LINE
+		rows, err := db.Query("SELECT firstName, lastName, album.title, cost FROM artist JOIN album ON artist.artistId = album.artistId WHERE artist.age > 25;") // <--- EDIT THIS LINE
 		if err != nil {
 			// careful about returning errors to the user!
 			c.AbortWithError(http.StatusInternalServerError, err)
@@ -135,9 +135,16 @@ func main() {
 		// once you've added all the columns in, close the header
 		table += "</thead><tbody>"
 		// columns
+		var firstName string
+		var lastName string
+		var title string
+		var cost string
+
 		for rows.Next() {
 			// rows.Scan() // put columns here prefaced with &
-			table += "<tr><td></td></tr>" // <--- EDIT THIS LINE
+			rows.Scan(&firstName, &lastName, &title, &cost)
+			table += "<tr><td>" + firstName + "</td><td>" + lastName + "</td><td>" + title + "</td><td>" + 
+			cost + "</td></tr>" // <--- EDIT THIS LINE
 		}
 		// finally, close out the body and table
 		table += "</tbody></table>"
